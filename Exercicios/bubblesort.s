@@ -1,63 +1,117 @@
 .data
-    # Vetor de words (32 bits) a ser ordenado
-    .align 2          # Alinhamento em 4 bytes (2^2)
-vetor: .word 7, 5, 2, 1, 1, 3, 4  # Dados iniciais
-tamanho: .word 7      # Tamanho do vetor
+    # Variáveis
+    prompt:     .asciz "Digite o tamanho do vetor (1-20): "
+    elem_prompt:.asciz "Digite o elemento ["
+    elem_prompt2:.asciz "]: "
+    vetor:      .word 0:20       # Vetor com espaço para 20 elementos
+    tamanho:    .word 0          # Tamanho real do vetor
+    newline:    .asciz "\n"
 
 .text
-    .align 2          # Alinhamento de instruções em 4 bytes
+    .align 2
     .globl main
 
 main:
-    # Inicialização
-    la s0, vetor       # s0 = endereço base do vetor
-    lw s1, tamanho     # s1 = tamanho do vetor
-    addi s1, s1, -2    # s1 = tamanho-2 (para acesso j+1 seguro)
-    li t0, -1          # t0 = contador externo (i) = -1
+    # Solicita tamanho do vetor
+    li a7, 4
+    la a0, prompt
+    ecall
+    
+    li a7, 5           # Lê inteiro (tamanho)
+    ecall
+    mv s1, a0          # s1 = tamanho
+    sw s1, tamanho, t0 # Armazena na memória
+    
+    # Verifica tamanho válido (1-20)
+    li t0, 1
+    blt s1, t0, main   # Se < 1, repete
+    li t0, 20
+    bgt s1, t0, main   # Se > 20, repete
+    
+    # Prepara para ler elementos
+    la s0, vetor       # s0 = endereço do vetor
+    li t0, 0           # t0 = contador
+
+read_loop:
+    bge t0, s1, sort   # Se leu todos, vai para ordenação
+    
+    # Mostra prompt do elemento
+    li a7, 4
+    la a0, elem_prompt
+    ecall
+    
+    li a7, 1
+    mv a0, t0
+    ecall              # Imprime índice
+    
+    li a7, 4
+    la a0, elem_prompt2
+    ecall
+    
+    # Lê elemento
+    li a7, 5
+    ecall
+    sw a0, 0(s0)       # Armazena no vetor
+    
+    addi s0, s0, 4     # Avança para próximo elemento
+    addi t0, t0, 1     # Incrementa contador
+    j read_loop
+
+sort:
+    # Inicializa ordenação
+    la s0, vetor       # Recarrega endereço do vetor
+    addi s1, s1, -2    # s1 = tamanho-2
+    li t0, -1          # t0 = contador externo (i)
 
 loop_externo:
-    # Verifica se terminou o loop externo
-    bgt t0, s1, fim    # Se i > tamanho-2, termina
+    bgt t0, s1, print_result
     
-    # Prepara próxima iteração
-    addi t0, t0, 1     # i++
-    li t1, 0           # t1 = contador interno (j) = 0
+    addi t0, t0, 1
+    li t1, 0           # t1 = contador interno (j)
 
 loop_interno:
-    # Verifica se terminou o loop interno
-    bgt t1, s1, loop_externo  # Se j > tamanho-2, volta para externo
+    bgt t1, s1, loop_externo
     
-    # Calcula endereço e carrega elementos
-    slli t2, t1, 2     # t2 = j * 4 (offset em bytes para words)
-    add t3, s0, t2     # t3 = endereço de vetor[j]
-    lw t4, 0(t3)       # t4 = vetor[j]
-    lw t5, 4(t3)       # t5 = vetor[j+1]
+    slli t2, t1, 2
+    add t3, s0, t2
+    lw t4, 0(t3)
+    lw t5, 4(t3)
     
-    addi t1, t1, 1     # j++
+    addi t1, t1, 1
     
-    # Decide se precisa fazer swap
-    ble t4, t5, loop_interno  # Se vetor[j] <= vetor[j+1], continua
+    ble t4, t5, loop_interno
     
-    # Faz swap dos elementos
-    sw t5, 0(t3)       # vetor[j] = t5 (antigo vetor[j+1])
-    sw t4, 4(t3)       # vetor[j+1] = t4 (antigo vetor[j])
-    j loop_interno     # Continua loop interno
+    # Swap
+    sw t5, 0(t3)
+    sw t4, 4(t3)
+    j loop_interno
 
-fim:
-    # Imprime o vetor ordenado
-    li t2, 0           # Contador de impressão
-    lw t3, tamanho     # Tamanho do vetor
-    li a7, 1           # Código de syscall para print_int
+print_result:
+    # Imprime vetor ordenado
+    li a7, 4
+    la a0, newline
+    ecall
+    
+    la s0, vetor       # Recarrega endereço
+    lw s1, tamanho     # Recarrega tamanho
+    li t0, 0           # Contador
 
 print_loop:
-    bge t2, t3, exit   # Se imprimiu todos, sai
-    slli t4, t2, 2     # Calcula offset (4 bytes por elemento)
-    add t4, s0, t4     # Endereço do elemento
-    lw a0, 0(t4)       # Carrega elemento (32 bits)
-    ecall              # Imprime inteiro
-    addi t2, t2, 1     # Incrementa contador
-    j print_loop       # Repete
+    bge t0, s1, exit
+    
+    li a7, 1
+    lw a0, 0(s0)
+    ecall
+    
+    # Imprime espaço
+    li a7, 11
+    li a0, ' '
+    ecall
+    
+    addi s0, s0, 4
+    addi t0, t0, 1
+    j print_loop
 
 exit:
-    li a7, 10          # Código para exit
-    ecall              # Termina programa
+    li a7, 10
+    ecall
