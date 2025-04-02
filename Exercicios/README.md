@@ -1,122 +1,88 @@
-# Assembly RISC-V: Comandos Básicos e Estruturas de Controle
+# Tabelas de Referência para Assembly RISC-V
 
-Vou detalhar os principais comandos e estruturas em assembly RISC-V, incluindo load/store, syscalls e estruturas de repetição.
+Aqui estão tabelas organizadas para facilitar a visualização dos principais comandos e estruturas em RISC-V:
 
-## Comandos Load e Store
+## Tabela 1: Instruções Load e Store
 
-Em RISC-V, os comandos de load (carregar) e store (armazenar) são usados para transferir dados entre memória e registradores.
+| Instrução | Sintaxe           | Descrição                                 | Exemplo                 |
+|-----------|-------------------|-------------------------------------------|-------------------------|
+| **lw**    | `lw rd, offset(rs1)` | Carrega palavra (32 bits) com sinal       | `lw t0, 4(sp)`         |
+| **lh**    | `lh rd, offset(rs1)` | Carrega meia palavra (16 bits) com sinal  | `lh t1, 8(s0)`         |
+| **lb**    | `lb rd, offset(rs1)` | Carrega byte (8 bits) com sinal           | `lb t2, -3(gp)`        |
+| **lhu**   | `lhu rd, offset(rs1)`| Carrega meia palavra sem sinal            | `lhu t3, 12(a0)`       |
+| **lbu**   | `lbu rd, offset(rs1)`| Carrega byte sem sinal                    | `lbu t4, 1(ra)`        |
+| **sw**    | `sw rs2, offset(rs1)`| Armazena palavra (32 bits)                | `sw a0, 0(sp)`         |
+| **sh**    | `sh rs2, offset(rs1)`| Armazena meia palavra (16 bits)           | `sh a1, 6(t0)`         |
+| **sb**    | `sb rs2, offset(rs1)`| Armazena byte (8 bits)                    | `sb a2, -4(s1)`        |
 
-### Load (Carregar)
-- `lw rd, offset(rs1)` - Load Word (carrega uma palavra de 32 bits)
-  ```asm
-  lw t0, 4(sp)  # Carrega o valor do endereço [sp + 4] no registrador t0
-  ```
+## Tabela 2: Syscalls Comuns (ambiente RARS/SPIM)
 
-- `lh rd, offset(rs1)` - Load Halfword (carrega meio palavra, 16 bits)
-- `lb rd, offset(rs1)` - Load Byte (carrega um byte, 8 bits)
-- `lbu rd, offset(rs1)` - Load Byte Unsigned (carrega byte sem sinal)
-- `lhu rd, offset(rs1)` - Load Halfword Unsigned (carrega meio palavra sem sinal)
+| Serviço | Código (a7) | Argumentos | Retorno | Descrição |
+|---------|------------|------------|---------|-----------|
+| print_int | 1 | a0 = inteiro | - | Imprime inteiro |
+| print_float | 2 | fa0 = float | - | Imprime float |
+| print_double | 3 | fa0 = double | - | Imprime double |
+| print_string | 4 | a0 = endereço | - | Imprime string |
+| read_int | 5 | - | a0 = inteiro | Lê inteiro |
+| read_float | 6 | - | fa0 = float | Lê float |
+| read_double | 7 | - | fa0 = double | Lê double |
+| read_string | 8 | a0 = buffer, a1 = tamanho | - | Lê string |
+| sbrk | 9 | a0 = bytes | a0 = endereço | Aloca memória |
+| exit | 10 | - | - | Termina programa |
+| print_char | 11 | a0 = caractere | - | Imprime caractere |
+| read_char | 12 | - | a0 = caractere | Lê caractere |
+| open_file | 13 | a0 = nome, a1 = flags | a0 = descritor | Abre arquivo |
+| read_file | 14 | a0 = descritor, a1 = buffer, a2 = tamanho | a0 = bytes lidos | Lê arquivo |
+| write_file | 15 | a0 = descritor, a1 = buffer, a2 = tamanho | a0 = bytes escritos | Escreve arquivo |
+| close_file | 16 | a0 = descritor | - | Fecha arquivo |
 
-### Store (Armazenar)
-- `sw rs2, offset(rs1)` - Store Word (armazena palavra de 32 bits)
-  ```asm
-  sw t0, 8(sp)  # Armazena o valor de t0 no endereço [sp + 8]
-  ```
+## Tabela 3: Estruturas de Controle e Repetição
 
-- `sh rs2, offset(rs1)` - Store Halfword (armazena meio palavra)
-- `sb rs2, offset(rs1)` - Store Byte (armazena um byte)
+| Padrão | Implementação em RISC-V | Exemplo |
+|--------|-------------------------|---------|
+| **if** | `beq/bne/blt/bge` + label | ```beq t0, t1, label_true``` |
+| **if-else** | ```beq t0, t1, if_true<br>j else<br>if_true:<br>  # código if<br>j end_if<br>else:<br>  # código else<br>end_if:``` | [Ver exemplo completo abaixo] |
+| **while** | ```loop:<br>  bge t0, t1, end_loop<br>  # corpo<br>  j loop<br>end_loop:``` | [Ver exemplo completo abaixo] |
+| **for** | ```li t0, 0       # i=0<br>li t1, 10      # limite<br>for_loop:<br>  bge t0, t1, end_for<br>  # corpo<br>  addi t0, t0, 1 # i++<br>  j for_loop<br>end_for:``` | [Ver exemplo completo abaixo] |
+| **do-while** | ```do:<br>  # corpo<br>  blt t0, t1, do``` | [Ver exemplo completo abaixo] |
 
-## Syscalls (Chamadas de Sistema)
+## Tabela 4: Instruções de Branch (Desvio)
 
-As syscalls em RISC-V dependem do ambiente de execução. No simulador RARS (RISC-V Assembler and Runtime Simulator), as syscalls são implementadas da seguinte forma:
+| Instrução | Sintaxe               | Descrição                          | Flags |
+|-----------|-----------------------|------------------------------------|-------|
+| **beq**   | `beq rs1, rs2, label` | Salta se igual (==)                | Z = 1 |
+| **bne**   | `bne rs1, rs2, label` | Salta se diferente (!=)            | Z = 0 |
+| **blt**   | `blt rs1, rs2, label` | Salta se menor (<, signed)         | N ≠ V |
+| **bge**   | `bge rs1, rs2, label` | Salta se maior ou igual (≥, signed)| N = V |
+| **bltu**  | `bltu rs1, rs2, label`| Salta se menor (unsigned)          | C = 1 |
+| **bgeu**  | `bgeu rs1, rs2, label`| Salta se maior ou igual (unsigned) | C = 0 |
 
-1. Carregar o número da syscall no registrador `a7`
-2. Colocar os argumentos nos registradores `a0`, `a1`, etc.
-3. Executar a instrução `ecall`
+## Exemplos Completos em Tabela
 
-Principais syscalls:
+### Exemplo 1: If-Else
 
-| Serviço | Código (a7) | Argumentos | Retorno |
-|---------|------------|------------|---------|
-| print_int | 1 | a0: inteiro a ser impresso | - |
-| print_string | 4 | a0: endereço da string | - |
-| read_int | 5 | - | a0: inteiro lido |
-| read_string | 8 | a0: buffer, a1: tamanho | - |
-| exit | 10 | - | - |
-| print_char | 11 | a0: caractere a imprimir | - |
-| read_char | 12 | - | a0: caractere lido |
+| Código C | Código RISC-V |
+|----------|---------------|
+| ```c<br>if (a == b) {<br>  // bloco if<br>} else {<br>  // bloco else<br>}<br>``` | ```asm<br>  beq a0, a1, if_true<br>  # bloco else<br>  j end_if<br>if_true:<br>  # bloco if<br>end_if:<br>``` |
 
-Exemplo de syscall para imprimir um inteiro:
-```asm
-li a0, 42       # Valor a ser impresso
-li a7, 1        # Código da syscall para print_int
-ecall           # Executa a syscall
-```
+### Exemplo 2: Loop While
 
-## Estruturas de Repetição
+| Código C | Código RISC-V |
+|----------|---------------|
+| ```c<br>while (i < 10) {<br>  // corpo<br>  i++;<br>}<br>``` | ```asm<br>  li t0, 0       # i=0<br>  li t1, 10      # limite<br>loop:<br>  bge t0, t1, end_loop<br>  # corpo<br>  addi t0, t0, 1 # i++<br>  j loop<br>end_loop:<br>``` |
 
-Em assembly, as estruturas de repetição são implementadas com instruções de branch (desvio).
+### Exemplo 3: Loop For
 
-### Loop Básico (while)
+| Código C | Código RISC-V |
+|----------|---------------|
+| ```c<br>for (i=0; i<10; i++) {<br>  // corpo<br>}<br>``` | ```asm<br>  li t0, 0       # i=0<br>  li t1, 10      # limite<br>for_loop:<br>  bge t0, t1, end_for<br>  # corpo<br>  addi t0, t0, 1 # i++<br>  j for_loop<br>end_for:<br>``` |
 
-```asm
-# Exemplo: while (t0 < t1) { ... }
-loop:
-    bge t0, t1, end_loop  # Se t0 >= t1, sai do loop
-    # Corpo do loop aqui
-    addi t0, t0, 1        # Incrementa t0
-    j loop                # Volta para o início do loop
-end_loop:
-```
+### Exemplo 4: Do-While
 
-### Loop For
+| Código C | Código RISC-V |
+|----------|---------------|
+| ```c<br>do {<br>  // corpo<br>  i++;<br>} while (i < 10);<br>``` | ```asm<br>  li t0, 0       # i=0<br>  li t1, 10      # limite<br>do:<br>  # corpo<br>  addi t0, t0, 1 # i++<br>  blt t0, t1, do<br>``` |
 
-```asm
-# Exemplo: for (i=0; i<10; i++) { ... }
-    li t0, 0             # t0 = 0 (i)
-    li t1, 10            # t1 = 10 (limite)
-for_loop:
-    bge t0, t1, end_for  # Se i >= 10, sai do loop
-    # Corpo do loop aqui
-    addi t0, t0, 1       # i++
-    j for_loop           # Repete
-end_for:
-```
-
-### Loop Do-While
-
-```asm
-# Exemplo: do { ... } while (t0 < t1)
-loop:
-    # Corpo do loop aqui
-    addi t0, t0, 1       # Incrementa t0
-    blt t0, t1, loop     # Se t0 < t1, repete
-```
-
-## Instruções de Controle de Fluxo
-
-Principais instruções para controle de fluxo:
-
-- `beq rs1, rs2, label` - Branch if Equal (desvia se igual)
-- `bne rs1, rs2, label` - Branch if Not Equal (desvia se diferente)
-- `blt rs1, rs2, label` - Branch if Less Than (desvia se menor)
-- `bge rs1, rs2, label` - Branch if Greater or Equal (desvia se maior ou igual)
-- `bltu rs1, rs2, label` - Branch if Less Than Unsigned
-- `bgeu rs1, rs2, label` - Branch if Greater or Equal Unsigned
-- `j label` - Jump incondicional
-- `jal rd, label` - Jump and Link (para chamadas de função)
-- `jalr rd, offset(rs1)` - Jump and Link Register
-
-Exemplo de if-else:
-```asm
-    # if (t0 == t1) { ... } else { ... }
-    bne t0, t1, else
-    # Código do if
-    j end_if
-else:
-    # Código do else
-end_if:
-```
 
 ___
 
