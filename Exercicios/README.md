@@ -36,17 +36,8 @@ Aqui estão tabelas organizadas para facilitar a visualização dos principais c
 | write_file | 15 | a0 = descritor, a1 = buffer, a2 = tamanho | a0 = bytes escritos | Escreve arquivo |
 | close_file | 16 | a0 = descritor | - | Fecha arquivo |
 
-## Tabela 3: Estruturas de Controle e Repetição
 
-| Padrão | Implementação em RISC-V | Exemplo |
-|--------|-------------------------|---------|
-| **if** | `beq/bne/blt/bge` + label | ```beq t0, t1, label_true``` |
-| **if-else** | ```beq t0, t1, if_true<br>j else<br>if_true:<br>  # código if<br>j end_if<br>else:<br>  # código else<br>end_if:``` | [Ver exemplo completo abaixo] |
-| **while** | ```loop:<br>  bge t0, t1, end_loop<br>  # corpo<br>  j loop<br>end_loop:``` | [Ver exemplo completo abaixo] |
-| **for** | ```li t0, 0       # i=0<br>li t1, 10      # limite<br>for_loop:<br>  bge t0, t1, end_for<br>  # corpo<br>  addi t0, t0, 1 # i++<br>  j for_loop<br>end_for:``` | [Ver exemplo completo abaixo] |
-| **do-while** | ```do:<br>  # corpo<br>  blt t0, t1, do``` | [Ver exemplo completo abaixo] |
-
-## Tabela 4: Instruções de Branch (Desvio)
+## Tabela 3: Instruções de Branch (Desvio)
 
 | Instrução | Sintaxe               | Descrição                          | Flags |
 |-----------|-----------------------|------------------------------------|-------|
@@ -57,32 +48,142 @@ Aqui estão tabelas organizadas para facilitar a visualização dos principais c
 | **bltu**  | `bltu rs1, rs2, label`| Salta se menor (unsigned)          | C = 1 |
 | **bgeu**  | `bgeu rs1, rs2, label`| Salta se maior ou igual (unsigned) | C = 0 |
 
-## Exemplos Completos em Tabela
 
-### Exemplo 1: If-Else
+# Exemplos Práticos em RISC-V
 
-| Código C | Código RISC-V |
-|----------|---------------|
-| ```c<br>if (a == b) {<br>  // bloco if<br>} else {<br>  // bloco else<br>}<br>``` | ```asm<br>  beq a0, a1, if_true<br>  # bloco else<br>  j end_if<br>if_true:<br>  # bloco if<br>end_if:<br>``` |
+## 1. Estrutura Condicional If-Else
 
-### Exemplo 2: Loop While
+```asm
+# Implementação de if-else em RISC-V
+# Equivalente a: if (a0 == a1) { ... } else { ... }
 
-| Código C | Código RISC-V |
-|----------|---------------|
-| ```c<br>while (i < 10) {<br>  // corpo<br>  i++;<br>}<br>``` | ```asm<br>  li t0, 0       # i=0<br>  li t1, 10      # limite<br>loop:<br>  bge t0, t1, end_loop<br>  # corpo<br>  addi t0, t0, 1 # i++<br>  j loop<br>end_loop:<br>``` |
+    beq a0, a1, if_true    # Se a0 == a1, vai para if_true
+    
+    # Bloco else (executa se condição falsa)
+    addi t0, zero, 2       # Código do else
+    j end_if               # Pula o bloco if
+    
+if_true:
+    # Bloco if (executa se condição verdadeira)
+    addi t0, zero, 1       # Código do if
+    
+end_if:
+    # Continuação do programa
+```
 
-### Exemplo 3: Loop For
+## 2. Loop While
 
-| Código C | Código RISC-V |
-|----------|---------------|
-| ```c<br>for (i=0; i<10; i++) {<br>  // corpo<br>}<br>``` | ```asm<br>  li t0, 0       # i=0<br>  li t1, 10      # limite<br>for_loop:<br>  bge t0, t1, end_for<br>  # corpo<br>  addi t0, t0, 1 # i++<br>  j for_loop<br>end_for:<br>``` |
+```asm
+# Implementação de while em RISC-V
+# Equivalente a: while (i < 10) { ... }
 
-### Exemplo 4: Do-While
+    li t0, 0               # Inicializa i = 0
+    li t1, 10              # Define o limite como 10
+    
+while_loop:
+    bge t0, t1, end_while  # Se i >= 10, sai do loop
+    
+    # Corpo do while
+    addi t0, t0, 1         # i++ (incrementa contador)
+    
+    j while_loop           # Volta para o início do loop
+    
+end_while:
+    # Continuação do programa
+```
 
-| Código C | Código RISC-V |
-|----------|---------------|
-| ```c<br>do {<br>  // corpo<br>  i++;<br>} while (i < 10);<br>``` | ```asm<br>  li t0, 0       # i=0<br>  li t1, 10      # limite<br>do:<br>  # corpo<br>  addi t0, t0, 1 # i++<br>  blt t0, t1, do<br>``` |
+## 3. Loop For
 
+```asm
+# Implementação de for em RISC-V
+# Equivalente a: for (i=0; i<10; i++) { ... }
+
+    li t0, 0               # Inicialização: i = 0
+    li t1, 10              # Define o limite como 10
+    
+for_loop:
+    bge t0, t1, end_for    # Condição: se i >= 10, sai
+    
+    # Corpo do for
+    # (Coloque aqui as instruções do loop)
+    
+    addi t0, t0, 1         # Incremento: i++
+    j for_loop             # Repete o loop
+    
+end_for:
+    # Continuação do programa
+```
+
+## 4. Loop Do-While
+
+```asm
+# Implementação de do-while em RISC-V
+# Equivalente a: do { ... } while (i < 10)
+
+    li t0, 0               # Inicializa i = 0
+    li t1, 10              # Define o limite como 10
+    
+do_while:
+    # Corpo do loop
+    # (Coloque aqui as instruções do loop)
+    
+    addi t0, t0, 1         # Incrementa i
+    
+    blt t0, t1, do_while   # Condição: repete se i < 10
+    
+    # Continuação do programa
+```
+
+## 5. Exemplo Completo: Soma de 1 a N
+
+```asm
+# Calcula a soma de 1 até N (valor em a0)
+# Retorna resultado em a0
+
+soma_1_a_n:
+    li t0, 0               # t0 = soma = 0
+    li t1, 1               # t1 = contador = 1
+    
+loop_soma:
+    bgt t1, a0, fim_soma   # Se contador > N, termina
+    
+    add t0, t0, t1         # soma += contador
+    addi t1, t1, 1         # contador++
+    
+    j loop_soma            # Repete
+    
+fim_soma:
+    mv a0, t0              # Move resultado para a0
+    ret                    # Retorna
+```
+
+## 6. Acesso à Memória (Load/Store)
+
+```asm
+# Exemplo de load/store com array
+# Assume: a0 = endereço base do array
+#         a1 = tamanho do array
+
+    li t0, 0               # t0 = índice = 0
+    li t1, 0               # t1 = soma = 0
+    
+loop_array:
+    bge t0, a1, fim_array  # Se índice >= tamanho, termina
+    
+    slli t2, t0, 2         # Calcula offset (índice * 4)
+    add t2, a0, t2         # t2 = endereço do elemento
+    
+    lw t3, 0(t2)           # Carrega elemento do array
+    add t1, t1, t3         # soma += elemento
+    
+    addi t0, t0, 1         # índice++
+    j loop_array
+    
+fim_array:
+    # t1 contém a soma dos elementos
+```
+
+Cada exemplo mostra a implementação direta das estruturas de controle, com comentários explicativos. Você pode adaptar esses padrões básicos para necessidades específicas em seus programas RISC-V.
 
 ___
 
