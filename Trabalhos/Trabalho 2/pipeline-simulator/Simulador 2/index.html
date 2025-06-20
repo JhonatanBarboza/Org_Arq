@@ -98,26 +98,44 @@ lw x5, 0(x0)</textarea>
                     <ul>
                         <li><code>add rd, rs1, rs2</code> - Adição</li>
                         <li><code>sub rd, rs1, rs2</code> - Subtração</li>
+                        <li><code>mul rd, rs1, rs2</code> - Multiplicação</li>
+                        <li><code>div rd, rs1, rs2</code> - Divisão</li>
                         <li><code>and rd, rs1, rs2</code> - AND lógico</li>
                         <li><code>or rd, rs1, rs2</code> - OR lógico</li>
                         <li><code>xor rd, rs1, rs2</code> - XOR lógico</li>
                     </ul>
-                    
+                    <br>
                     <strong>Instruções Tipo I:</strong>
                     <ul>
                         <li><code>addi rd, rs1, imm</code> - Adição com imediato</li>
                         <li><code>lw rd, offset(rs1)</code> - Load word</li>
                     </ul>
-                    
+                    <br>
                     <strong>Instruções Tipo S:</strong>
                     <ul>
                         <li><code>sw rs2, offset(rs1)</code> - Store word</li>
                     </ul>
-                    
+                    <br>
                     <strong>Instruções de Branch:</strong>
                     <ul>
                         <li><code>beq rs1, rs2, label</code> - Branch if equal</li>
                         <li><code>bne rs1, rs2, label</code> - Branch if not equal</li>
+                    </ul>
+                    <br>
+                    <strong>Instruções de Jump:</strong>
+                    <ul>
+                        <li><code>jal rd, label</code> - Jump and link</li>
+                        <li><code>jalr rd, rs1</code> - Jump and link register</li>
+                    </ul>
+                    <br>
+                    <strong>Instruções de Controle:</strong>
+                    <ul>
+                        <li><code>ecall</code> - Chamada de sistema</li>
+
+                        <li>Código 1: Imprimir inteiro (valor em x11)</li>
+                        <li>Código 10: Terminar programa</li>
+
+                        <li>Usa registradores x10 (código) e x11 (argumento)</li>
                     </ul>
                 </div>
             </details>
@@ -153,6 +171,6 @@ lw x5, 0(x0)</textarea>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script teste.js"></script>
 </body>
 </html>
