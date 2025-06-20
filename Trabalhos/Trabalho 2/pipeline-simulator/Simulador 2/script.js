@@ -33,6 +33,7 @@ const regMap = {
     'x24': 24, 'x25': 25, 'x26': 26, 'x27': 27, 'x28': 28, 'x29': 29, 'x30': 30, 'x31': 31
 };
 
+// Função parseAssembly modificada para tratar as novas instruções
 function parseAssembly(code) {
     const lines = code.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#'));
     const instructions = [];
@@ -67,9 +68,15 @@ function parseAssembly(code) {
         
         switch (instruction.type) {
             case 'R':
-                instruction.rd = regMap[parts[1]];
-                instruction.rs1 = regMap[parts[2]];
-                instruction.rs2 = regMap[parts[3]];
+                if (opcode === 'mul' || opcode === 'div') {
+                    instruction.rd = regMap[parts[1]];
+                    instruction.rs1 = regMap[parts[2]];
+                    instruction.rs2 = regMap[parts[3]];
+                } else {
+                    instruction.rd = regMap[parts[1]];
+                    instruction.rs1 = regMap[parts[2]];
+                    instruction.rs2 = regMap[parts[3]];
+                }
                 break;
             case 'I':
                 if (opcode === 'lw') {
@@ -77,6 +84,24 @@ function parseAssembly(code) {
                     const match = parts[2].match(/(-?\d+)\((x\d+)\)/);
                     instruction.offset = parseInt(match[1]);
                     instruction.rs1 = regMap[match[2]];
+                } else if (opcode === 'jalr') {
+                    instruction.rd = regMap[parts[1]];
+                    if (parts.length > 2) {
+                        if (parts[2].includes('(')) {
+                            // Formato: jalr rd, offset(rs1)
+                            const match = parts[2].match(/(-?\d+)\((x\d+)\)/);
+                            instruction.offset = parseInt(match[1]);
+                            instruction.rs1 = regMap[match[2]];
+                        } else {
+                            // Formato: jalr rd, rs1
+                            instruction.rs1 = regMap[parts[2]];
+                            instruction.offset = 0;
+                        }
+                    } else {
+                        // Formato: jalr rd (assume rs1=x1, offset=0)
+                        instruction.rs1 = 1; // x1 por padrão
+                        instruction.offset = 0;
+                    }
                 } else {
                     instruction.rd = regMap[parts[1]];
                     instruction.rs1 = regMap[parts[2]];
@@ -95,6 +120,15 @@ function parseAssembly(code) {
                 instruction.label = parts[3];
                 instruction.target = labels[parts[3]];
                 break;
+            case 'J':
+                // JAL rd, label
+                instruction.rd = regMap[parts[1]];
+                instruction.label = parts[2];
+                instruction.target = labels[parts[2]];
+                break;
+            case 'SYSTEM':
+                // ECALL não precisa de operandos adicionais
+                break;
         }
         
         instructions.push(instruction);
@@ -103,12 +137,16 @@ function parseAssembly(code) {
     return { instructions, labels };
 }
 
+// Função getInstructionType modificada para incluir as novas instruções
 function getInstructionType(opcode) {
     const types = {
         'add': 'R', 'sub': 'R', 'and': 'R', 'or': 'R', 'xor': 'R',
+        'mul': 'R', 'div': 'R',  // Novas instruções de multiplicação/divisão
         'addi': 'I', 'lw': 'I',
         'sw': 'S',
-        'beq': 'B', 'bne': 'B'
+        'beq': 'B', 'bne': 'B',
+        'jal': 'J', 'jalr': 'I',  // Instruções de salto
+        'ecall': 'SYSTEM'         // Chamada de sistema
     };
     return types[opcode] || 'R';
 }
@@ -170,6 +208,7 @@ function detectHazards() {
     return hazards;
 }
 
+// Função executeInstruction modificada para incluir as novas operações
 function executeInstruction(instruction, stage) {
     if (!instruction) return null;
     
@@ -206,6 +245,19 @@ function executeInstruction(instruction, stage) {
                 case 'xor':
                     result.result = rs1Val ^ rs2Val;
                     break;
+                case 'mul':
+                    result.result = rs1Val * rs2Val;
+                    result.executionTime = 3; // Multiplicação demora mais ciclos
+                    break;
+                case 'div':
+                    if (rs2Val === 0) {
+                        result.result = -1; // Divisão por zero
+                        result.error = "Division by zero";
+                    } else {
+                        result.result = Math.floor(rs1Val / rs2Val);
+                    }
+                    result.executionTime = 5; // Divisão demora ainda mais ciclos
+                    break;
                 case 'addi':
                     result.result = rs1Val + instruction.imm;
                     break;
@@ -221,6 +273,35 @@ function executeInstruction(instruction, stage) {
                     break;
                 case 'bne':
                     result.taken = rs1Val !== rs2Val;
+                    break;
+                case 'jal':
+                    result.result = simulator.pc * 4; // Salva PC+4 no registrador
+                    result.taken = true;
+                    break;
+                case 'jalr':
+                    result.result = simulator.pc * 4; // Salva PC+4 no registrador
+                    result.targetAddress = (rs1Val + instruction.offset) / 4; // Calcula endereço de destino
+                    result.taken = true;
+                    break;
+                case 'ecall':
+                    result.systemCall = true;
+                    // Implementação básica de system call
+                    // a0 (x10) = código da syscall, a1 (x11) = argumento
+                    const syscallCode = simulator.registers[10]; // a0
+                    const arg = simulator.registers[11]; // a1
+                    
+                    switch (syscallCode) {
+                        case 1: // print integer
+                            console.log(`ECALL Print: ${arg}`);
+                            result.output = `Print: ${arg}`;
+                            break;
+                        case 10: // exit
+                            result.exit = true;
+                            result.output = "Program exit";
+                            break;
+                        default:
+                            result.output = `Unknown syscall: ${syscallCode}`;
+                    }
                     break;
             }
             break;
@@ -243,6 +324,27 @@ function executeInstruction(instruction, stage) {
     return result;
 }
 
+// Função helper para criar div de output do sistema
+function createSystemOutputDiv() {
+    const container = document.querySelector('.simulator-container');
+    const outputDiv = document.createElement('div');
+    outputDiv.id = 'systemOutput';
+    outputDiv.style.cssText = `
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 10px 0;
+        font-family: 'Courier New', monospace;
+        max-height: 200px;
+        overflow-y: auto;
+    `;
+    outputDiv.innerHTML = '<h3>System Call Output:</h3>';
+    container.appendChild(outputDiv);
+    return outputDiv;
+}
+
+// Função stepPipeline modificada para tratar saltos e system calls
 function stepPipeline() {
     const hazards = detectHazards();
     simulator.hazardInfo = hazards;
@@ -275,6 +377,39 @@ function stepPipeline() {
             simulator.pipeline.ID = null;
         }
         
+        // JAL handling
+        if (simulator.pipeline.EX && simulator.pipeline.EX.opcode === 'jal' && simulator.pipeline.EX.taken) {
+            simulator.pc = simulator.pipeline.EX.target;
+            // Flush pipeline
+            simulator.pipeline.IF = null;
+            simulator.pipeline.ID = null;
+        }
+        
+        // JALR handling
+        if (simulator.pipeline.EX && simulator.pipeline.EX.opcode === 'jalr' && simulator.pipeline.EX.taken) {
+            simulator.pc = simulator.pipeline.EX.targetAddress;
+            // Flush pipeline
+            simulator.pipeline.IF = null;
+            simulator.pipeline.ID = null;
+        }
+        
+        // ECALL handling
+        if (simulator.pipeline.EX && simulator.pipeline.EX.opcode === 'ecall') {
+            if (simulator.pipeline.EX.exit) {
+                simulator.running = false;
+                document.getElementById('stepBtn').disabled = true;
+                simulator.autoRun = false;
+                document.getElementById('autoBtn').textContent = '⚡ Auto Executar';
+                alert('Programa terminado por ECALL exit');
+                return;
+            }
+            if (simulator.pipeline.EX.output) {
+                // Mostrar output da system call
+                const outputDiv = document.getElementById('systemOutput') || createSystemOutputDiv();
+                outputDiv.innerHTML += `<div>Ciclo ${simulator.cycle}: ${simulator.pipeline.EX.output}</div>`;
+            }
+        }
+        
         // Fetch next instruction
         if (simulator.pc < simulator.instructions.length) {
             simulator.pipeline.IF = { ...simulator.instructions[simulator.pc] };
@@ -292,6 +427,7 @@ function stepPipeline() {
         simulator.stats.instructions++;
     }
 }
+
 
 function updateDisplay() {
     // Update cycle counter
