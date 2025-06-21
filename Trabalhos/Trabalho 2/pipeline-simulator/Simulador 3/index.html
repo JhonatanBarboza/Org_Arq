@@ -78,6 +78,33 @@ lw x5, 0(x0)</textarea>
                 <h3>💾 Memória de Instruções</h3>
                 <div class="instruction-memory" id="instructionMemory"></div>
                 
+                <div class="memory-header">
+                    <h3>💾 Memória de Dados</h3>
+                    <span style="font-size: 12px; color: #718096;">Endereço : Valor : Hexadecimal</span>
+                </div>
+                <div class="data-memory" id="dataMemory">
+                    <div class="memory-line">
+                        <span class="memory-address">0x000</span>
+                        <span class="memory-value">0</span>
+                        <span class="memory-hex">0x00000000</span>
+                    </div>
+                </div>
+                
+                <div class="memory-legend">
+                    <div class="legend-item">
+                        <div class="legend-color legend-read"></div>
+                        <span>Leitura</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-write"></div>
+                        <span>Escrita</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-modified"></div>
+                        <span>Modificado</span>
+                    </div>
+                </div>
+                <br>
                 <h3 style="margin-top: 20px;">🗄️ Performance</h3>
                 <div id="performanceStats">
                     <div>Instruções: <span id="instCount">0</span></div>
@@ -85,6 +112,7 @@ lw x5, 0(x0)</textarea>
                     <div>Stalls: <span id="stallCount">0</span></div>
                     <div>CPI: <span id="cpiValue">0.00</span></div>
                 </div>
+      
             </div>
         </div>
 
@@ -127,16 +155,7 @@ lw x5, 0(x0)</textarea>
                         <li><code>jal rd, label</code> - Jump and link</li>
                         <li><code>jalr rd, rs1</code> - Jump and link register</li>
                     </ul>
-                    <br>
-                    <strong>Instruções de Controle:</strong>
-                    <ul>
-                        <li><code>ecall</code> - Chamada de sistema</li>
-
-                        <li>Código 1: Imprimir inteiro (valor em x11)</li>
-                        <li>Código 10: Terminar programa</li>
-
-                        <li>Usa registradores x10 (código) e x11 (argumento)</li>
-                    </ul>
+                    <br>    
                 </div>
             </details>
             
@@ -171,6 +190,6 @@ lw x5, 0(x0)</textarea>
         </div>
     </div>
 
-    <script src="script teste.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

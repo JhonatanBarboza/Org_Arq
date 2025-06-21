@@ -12,10 +12,11 @@ O simulador é uma ferramenta educacional completa que demonstra visualmente com
 - Contador de ciclos e estatísticas de performance
 
 ### **Instruções Suportadas**
-- **Tipo R**: `add`, `sub`, `and`, `or`, `xor`
+- **Tipo R**: `add`, `sub`, `mul`, `div`, `and`, `or`, `xor`
 - **Tipo I**: `addi`, `lw` (load word)
 - **Tipo S**: `sw` (store word)  
 - **Tipo B**: `beq`, `bne` (branches)
+- **Tipo J**: `jal`, `jalr` (jumps)
 
 ### **Detecção e Resolução de Hazards**
 

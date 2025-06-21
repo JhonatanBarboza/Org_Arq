@@ -297,3 +297,171 @@ code {
     border-radius: 4px;
     font-family: 'Courier New', monospace;
 }
+
+/* Estilos para visualização da memória de dados */
+.data-memory {
+    max-height: 300px;
+    overflow-y: auto;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.memory-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.memory-line:hover {
+    background: #e2e8f0;
+}
+
+.memory-address {
+    color: #4a5568;
+    font-weight: bold;
+    min-width: 60px;
+}
+
+.memory-value {
+    color: #2d3748;
+    font-weight: bold;
+    min-width: 80px;
+    text-align: right;
+}
+
+.memory-hex {
+    color: #718096;
+    font-size: 11px;
+    min-width: 100px;
+    text-align: right;
+}
+
+/* Destaque para último acesso de leitura */
+.memory-line.last-read {
+    background: linear-gradient(90deg, #bee3f8, #e6fffa);
+    border-left-color: #3182ce;
+    animation: readPulse 1s ease-out;
+}
+
+/* Destaque para último acesso de escrita */
+.memory-line.last-write {
+    background: linear-gradient(90deg, #fbb6ce, #fed7d7);
+    border-left-color: #5de53e;
+    animation: writePulse 1s ease-out;
+}
+
+/* Destaque para acessos recentes de leitura */
+.memory-line.recent-read {
+    background: #e6fffa;
+    border-left-color: #38b2ac;
+}
+
+/* Destaque para acessos recentes de escrita */
+.memory-line.recent-write {
+    background: #dffed7;
+    border-left-color: #78f565;
+}
+
+/* Animações */
+@keyframes readPulse {
+    0% { 
+        background: linear-gradient(90deg, #3182ce, #bee3f8);
+        transform: scale(1.02);
+    }
+    100% { 
+        background: linear-gradient(90deg, #bee3f8, #e6fffa);
+        transform: scale(1);
+    }
+}
+
+@keyframes writePulse {
+    0% { 
+        background: linear-gradient(90deg, #52e53e, #b8fbb6);
+        transform: scale(1.02);
+    }
+    100% { 
+        background: linear-gradient(90deg, #befbb6, #e3fed7);
+        transform: scale(1);
+    }
+}
+
+/* Informações de acesso à memória */
+.memory-info {
+    background: #edf2f7;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #4a5568;
+}
+
+/* Cabeçalho para seção de memória */
+.memory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.memory-legend {
+    display: flex;
+    gap: 15px;
+    font-size: 11px;
+    margin-top: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-read {
+    background: linear-gradient(90deg, #bee3f8, #e6fffa);
+    border: 1px solid #3182ce;
+}
+
+.legend-write {
+    background: linear-gradient(90deg, #cbfbb6, #d9fed7);
+    border: 1px solid #5ae53e;
+}
+
+.legend-modified {
+    background: #fef5e7;
+    border: 1px solid #f6ad55;
+}
+
+/* Responsividade para dispositivos menores */
+@media (max-width: 768px) {
+    .memory-line {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    
+    .memory-address,
+    .memory-value,
+    .memory-hex {
+        min-width: unset;
+        text-align: left;
+    }
+}
